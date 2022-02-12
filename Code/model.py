@@ -47,12 +47,41 @@ class IFCNN(nn.Module):
         self.conv1.padding = (0, 0)
 
     def tensor_max(self, tensors):
-        max_tensor = None
+        """max_tensor = None
         for i, tensor in enumerate(tensors):
             if i == 0:
                 max_tensor = tensor
             else:
                 max_tensor = torch.max(max_tensor, tensor)
+        return max_tensor"""
+        max_tensor=None
+        for _,i in enumerate(range(64)):
+              tensor1=tensors[0][0][i]
+              tensor2=tensors[1][0][i]
+              
+  
+              arr1=tensor1.cpu().numpy().astype(np.uint8)
+              arr2=tensor2.cpu().numpy().astype(np.uint8)
+              
+              g1=ski.greycomatrix(arr1,[1],[0],levels=256)
+              g2=ski.greycomatrix(arr2,[1],[0],levels=256)
+              c1=ski.greycoprops(g1,'contrast')[0][0]
+              e1=ski.greycoprops(g1,'energy')[0][0]
+              c2=ski.greycoprops(g2,'contrast')[0][0]
+              e2=ski.greycoprops(g2,'energy')[0][0]
+              if(_==0):
+                if(e1>e2):
+                  max_tensor=torch.unsqueeze(tensors[0][0][i],0)
+                else:
+                  max_tensor=torch.unsqueeze(tensors[1][0][i],0)
+              else:
+                if(e1>e2):
+                  max_tensor=torch.cat((max_tensor,torch.unsqueeze(tensors[0][0][i],0)),0)
+                else:
+                  max_tensor=torch.cat((max_tensor,torch.unsqueeze(tensors[1][0][i],0)),0)
+                
+        max_tensor=torch.unsqueeze(max_tensor,0)      
+        
         return max_tensor
 
     def tensor_sum(self, tensors):
