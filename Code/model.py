@@ -6,6 +6,8 @@ import math
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
+import skimage.feature as ski
+import numpy as np
 
 
 # My Convolution Block
