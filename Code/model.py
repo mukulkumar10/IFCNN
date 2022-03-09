@@ -1,6 +1,3 @@
-'''---------------------------------------------------------------------------
-IFCNN: A General Image Fusion Framework Based on Convolutional Neural Network
-----------------------------------------------------------------------------'''
 import torch
 import math
 import torch.nn as nn
@@ -10,10 +7,11 @@ import skimage.feature as ski
 import numpy as np
 
 
+
 # My Convolution Block
 class ConvBlock(nn.Module):
-    def __init__(self, inplane, outplane):
-        super(ConvBlock, self).__init__()
+    def _init_(self, inplane, outplane):
+        super(ConvBlock, self)._init_()
         self.padding = (1, 1, 1, 1)
         self.conv = nn.Conv2d(inplane, outplane, kernel_size=3, padding=0, stride=1, bias=False)
         self.bn = nn.BatchNorm2d(outplane)
@@ -28,12 +26,13 @@ class ConvBlock(nn.Module):
 
     
 class IFCNN(nn.Module):
-    def __init__(self, resnet, fuse_scheme=0):
-        super(IFCNN, self).__init__()
+    def _init_(self, resnet, fuse_scheme=0):
+        super(IFCNN, self)._init_()
         self.fuse_scheme = fuse_scheme # MAX, MEAN, SUM
+        self.conv1 = ConvBlock(1,64)
         self.conv2 = ConvBlock(64, 64)
         self.conv3 = ConvBlock(64, 64)
-        self.conv4 = nn.Conv2d(64, 3, kernel_size=1, padding=0, stride=1, bias=True)
+        self.conv4 = nn.Conv2d(64, 1, kernel_size=1, padding=0, stride=1, bias=True)
 
         # Initialize parameters for other parameters
         for m in self.modules():
@@ -42,29 +41,28 @@ class IFCNN(nn.Module):
                 m.weight.data.normal_(0, math.sqrt(2. / n))
 
         # Initialize conv1 with the pretrained resnet101 and freeze its parameters
-        for p in resnet.parameters():
-            p.requires_grad = False
-        self.conv1 = resnet.conv1
-        self.conv1.stride = 1
-        self.conv1.padding = (0, 0)
+        # for p in resnet.parameters():
+        #     p.requires_grad = False
+        # self.conv1 = resnet.conv1
+        # self.conv1.stride = 1
+        # self.conv1.padding = (0, 0)
 
     def tensor_max(self, tensors):
-        """max_tensor = None
-        for i, tensor in enumerate(tensors):
-            if i == 0:
-                max_tensor = tensor
-            else:
-                max_tensor = torch.max(max_tensor, tensor)
-        return max_tensor"""
+        # max_tensor = None
+        
+        # for i, tensor in enumerate(tensors):
+        #     if i == 0:
+        #         max_tensor = tensor
+        #     else:
+        #         max_tensor = torch.max(max_tensor, tensor)
         max_tensor=None
         for _,i in enumerate(range(64)):
               tensor1=tensors[0][0][i]
               tensor2=tensors[1][0][i]
               
   
-              arr1=tensor1.cpu().numpy().astype(np.uint8)
-              arr2=tensor2.cpu().numpy().astype(np.uint8)
-              
+              arr1=tensor1.cpu().detach().numpy().astype(np.uint8)
+              arr2=tensor2.cpu().detach().numpy().astype(np.uint8)
               g1=ski.greycomatrix(arr1,[1],[0],levels=256)
               g2=ski.greycomatrix(arr2,[1],[0],levels=256)
               c1=ski.greycoprops(g1,'contrast')[0][0]
@@ -84,6 +82,7 @@ class IFCNN(nn.Module):
                 
         max_tensor=torch.unsqueeze(max_tensor,0)      
         
+
         return max_tensor
 
     def tensor_sum(self, tensors):
@@ -121,8 +120,8 @@ class IFCNN(nn.Module):
 
     def forward(self, *tensors):
         # Feature extraction
-        outs = self.tensor_padding(tensors=tensors, padding=(3, 3, 3, 3), mode='replicate')
-        outs = self.operate(self.conv1, outs)
+        #outs = self.tensor_padding(tensors=tensors, padding=(1, 1, 1, 1), mode='constant')
+        outs = self.operate(self.conv1, tensors)
         outs = self.operate(self.conv2, outs)
         
         # Feature fusion
