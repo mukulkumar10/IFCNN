@@ -26,9 +26,9 @@ class ConvBlock(nn.Module):
 
     
 class IFCNN(nn.Module):
-    def _init_(self, resnet, fuse_scheme=0):
+    def _init_(self):
         super(IFCNN, self)._init_()
-        self.fuse_scheme = fuse_scheme # MAX, MEAN, SUM
+        
         self.conv1 = ConvBlock(1,64)
         self.conv2 = ConvBlock(64, 64)
         self.conv3 = ConvBlock(64, 64)
@@ -124,15 +124,8 @@ class IFCNN(nn.Module):
         outs = self.operate(self.conv1, tensors)
         outs = self.operate(self.conv2, outs)
         
-        # Feature fusion
-        if self.fuse_scheme == 0: # MAX
-            out = self.tensor_max(outs)
-        elif self.fuse_scheme == 1: # SUM
-            out = self.tensor_sum(outs)
-        elif self.fuse_scheme == 2: # MEAN
-            out = self.tensor_mean(outs)
-        else: # Default: MAX
-            out = self.tensor_max(outs)
+        
+        out=self.tensor_max(outs)
         
         # Feature reconstruction
         out = self.conv3(out)
@@ -141,8 +134,6 @@ class IFCNN(nn.Module):
 
 
 def myIFCNN(fuse_scheme=0):
-    # pretrained resnet101
-    resnet = models.resnet101(pretrained=True)
     # our model
-    model = IFCNN(resnet, fuse_scheme=fuse_scheme)
+    model = IFCNN()
     return model
