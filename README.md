@@ -9,8 +9,9 @@ Project page of  "[IFCNN: A General Image Fusion Framework Based on Convolutiona
 - torchvision
 - numpy
 - opencv-python
-- jupyter notebook (optional)
-- anaconda (suggeted)
+- jupyter notebook (suggested)
+- anaconda (optional)
+- github
 
 ### Configuration
 ```bash
